@@ -10,6 +10,8 @@ services:
       - ./api1/app:/app
     networks:
       - api-network
+    depends_on:
+      - otel-collector
 
   api2:
     build:
@@ -17,7 +19,22 @@ services:
     ports:
       - "8002:8000"
     volumes:
-      - ./api1/app:/app
+      - ./api2/app:/app
+    networks:
+      - api-network
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.96.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP http receiver
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
     networks:
       - api-network
 
