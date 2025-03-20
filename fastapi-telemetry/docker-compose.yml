@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  api1:
+    build:
+      context: ./api1
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./api1/app:/app
+    networks:
+      - api-network
+
+  api2:
+    build:
+      context: ./api2
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./api1/app:/app
+    networks:
+      - api-network
+
+networks:
+  api-network:
+    driver: bridge
