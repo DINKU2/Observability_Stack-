@@ -37,6 +37,18 @@ services:
       - "8889:8889"   # Prometheus exporter metrics
     networks:
       - api-network
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.54
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14250:14250"  # Model used by collector
+    networks:
+      - api-network
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
 
 networks:
   api-network:

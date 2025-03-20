@@ -14,13 +14,17 @@ processors:
 exporters:
   logging:
     verbosity: detailed
+  otlp:
+    endpoint: "jaeger:14250"
+    tls:
+      insecure: true
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [logging]
+      exporters: [logging, otlp]
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch]
