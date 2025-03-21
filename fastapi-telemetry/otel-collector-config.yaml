@@ -18,6 +18,11 @@ exporters:
     endpoint: "jaeger:14250"
     tls:
       insecure: true
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: "demo"
+    const_labels:
+      label1: value1
 
 service:
   pipelines:
@@ -28,4 +33,4 @@ service:
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [logging] 
+      exporters: [logging, prometheus] 

@@ -39,6 +39,7 @@ services:
       - api-network
     depends_on:
       - jaeger
+      - prometheus
 
   jaeger:
     image: jaegertracing/all-in-one:1.54
@@ -49,6 +50,15 @@ services:
       - api-network
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - api-network
 
 networks:
   api-network:

@@ -8,3 +8,5 @@ opentelemetry-instrumentation-requests
 opentelemetry-exporter-otlp
 opentelemetry-instrumentation-httpx
 opentelemetry-instrumentation
+prometheus-client
+opentelemetry-instrumentation-system-metrics
