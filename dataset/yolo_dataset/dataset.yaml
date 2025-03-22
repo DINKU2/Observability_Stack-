@@ -1,0 +1,6 @@
+names:
+  0: license_plate
+nc: 1
+path: /Users/dinukkarunaratne/Desktop/EOG/dataset/yolo_dataset
+train: /Users/dinukkarunaratne/Desktop/EOG/dataset/yolo_dataset/train/images
+val: /Users/dinukkarunaratne/Desktop/EOG/dataset/yolo_dataset/val/images
