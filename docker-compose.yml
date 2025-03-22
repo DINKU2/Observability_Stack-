@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  lpr-api:
+    build:
+      context: ./app/apis
+      dockerfile: Dockerfile.lpr
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app/data:/app/data
+      - ./dataset:/app/dataset
+      - ./app/static:/app/static
+    environment:
+      - MODEL_PATH=/app/models/yolov8n.pt
+      - CUSTOMER_API_URL=http://customer-api:8001
+      - DATASET_PATH=/app/dataset/images
+    depends_on:
+      - otel-collector
+    networks:
+      - app-network
+
+  customer-api:
+    build:
+      context: ./app/apis
+      dockerfile: Dockerfile.customer
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./app/data:/app/data
+    environment:
+      - CUSTOMER_DB_PATH=/app/data/customer_database.csv
+    depends_on:
+      - otel-collector
+    networks:
+      - app-network
+
+  web-ui:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./app/templates:/usr/share/nginx/html
+    networks:
+      - app-network
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./app/config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"  # OTLP gRPC
+      - "4318:4318"  # OTLP HTTP
+      - "8889:8889"  # Prometheus exporter
+    networks:
+      - app-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14250:14250"  # Receiver for OpenTelemetry collector
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - app-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./app/config/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - otel-collector
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

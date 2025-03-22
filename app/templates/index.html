@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drive-Thru Recognition System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .car-image {
+            width: 180px;
+            height: 130px;
+            object-fit: cover;
+            cursor: pointer;
+            margin: 5px;
+            border: 3px solid transparent;
+        }
+        .selected {
+            border-color: #0d6efd;
+        }
+        .results-container {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .processed-image {
+            max-width: 100%;
+            max-height: 400px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Drive-Thru Recognition System</h1>
+        
+        <div class="row mb-3">
+            <div class="col">
+                <button id="loadImages" class="btn btn-primary">Load Random Images</button>
+                <button id="processSelected" class="btn btn-success" disabled>Process Selected Image</button>
+            </div>
+        </div>
+        
+        <div id="imageGallery" class="row mb-4"></div>
+        
+        <div id="results" class="results-container" style="display: none;">
+            <h3>Customer Information</h3>
+            <div id="customerInfo"></div>
+            
+            <h3 class="mt-4">Processed Image</h3>
+            <div id="processedImageContainer" class="text-center">
+                <img id="processedImage" class="processed-image" />
+            </div>
+            
+            <h3 class="mt-4">Recommendations</h3>
+            <div id="recommendations"></div>
+        </div>
+    </div>
+
+    <script>
+        // API endpoints - Use full URLs to services
+        const LPR_API = 'http://localhost:8000';  // Point to the FastAPI service 
+        const CUSTOMER_API = 'http://localhost:8001';
+        
+        let selectedImage = null;
+        
+        document.getElementById('loadImages').addEventListener('click', loadRandomImages);
+        document.getElementById('processSelected').addEventListener('click', processSelectedImage);
+        
+        // Add API verification function
+        async function verifyApiConnections() {
+            const imageGallery = document.getElementById('imageGallery');
+            imageGallery.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h4>Checking API connections...</h4>
+                        <div id="apiStatus">Testing connections...</div>
+                    </div>
+                </div>
+            `;
+            
+            const statusDiv = document.getElementById('apiStatus');
+            
+            // Check LPR API
+            try {
+                statusDiv.innerHTML += `<p>Testing LPR API health...</p>`;
+                const lprHealth = await fetch(`${LPR_API}/health`);
+                if (lprHealth.ok) {
+                    const healthData = await lprHealth.json();
+                    statusDiv.innerHTML += `
+                        <p>✅ LPR API: Connected</p>
+                        <p>Dataset path: ${healthData.dataset_path}</p>
+                        <p>Dataset exists: ${healthData.dataset_exists}</p>
+                        <p>Image count: ${healthData.image_count}</p>
+                    `;
+                    
+                    // If dataset exists and has images, try loading them
+                    if (healthData.dataset_exists && healthData.image_count > 0) {
+                        statusDiv.innerHTML += `<p>Dataset looks good! Loading images...</p>`;
+                        setTimeout(loadRandomImages, 1000);
+                        return;
+                    } else {
+                        statusDiv.innerHTML += `<p>⚠️ Dataset issue. Trying test images...</p>`;
+                        setTimeout(loadTestImages, 1000);
+                        return;
+                    }
+                } else {
+                    statusDiv.innerHTML += `<p>❌ LPR API health check failed (${lprHealth.status})</p>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML += `<p>❌ LPR API: Unreachable (${error.message})</p>`;
+            }
+            
+            // If we get here, try test images as fallback
+            statusDiv.innerHTML += `<p>Trying fallback test images...</p>`;
+            setTimeout(loadTestImages, 1000);
+        }
+        
+        async function loadTestImages() {
+            try {
+                // Show loading indicator
+                const imageGallery = document.getElementById('imageGallery');
+                imageGallery.innerHTML = '<div class="col-12 text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+                
+                console.log("Fetching test images from API...");
+                
+                // Fetch test images from our API
+                const response = await fetch(`${LPR_API}/test_images/?count=30`);
+                console.log("Test Images API Response status:", response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`Error fetching test images: ${response.status}`);
+                }
+                
+                const testImages = await response.json();
+                console.log("Test images response:", testImages);
+                
+                // Clear gallery
+                imageGallery.innerHTML = '';
+                
+                // Add test images
+                if (Array.isArray(testImages)) {
+                    testImages.forEach((imagePath, index) => {
+                        const fullImageUrl = `${LPR_API}${imagePath}`;
+                        console.log(`Test image ${index+1} URL:`, fullImageUrl);
+                        
+                        const imgElement = document.createElement('img');
+                        imgElement.src = fullImageUrl;
+                        imgElement.className = 'car-image';
+                        imgElement.alt = `Test ${index + 1}`;
+                        imgElement.addEventListener('click', () => selectImage(imgElement, fullImageUrl));
+                        
+                        // Add error handler
+                        imgElement.onerror = () => {
+                            console.error(`Failed to load test image: ${fullImageUrl}`);
+                            imgElement.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22200%22%20height%3D%22150%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20150%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_189b385cf21%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A10pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_189b385cf21%22%3E%3Crect%20width%3D%22200%22%20height%3D%22150%22%20fill%3D%22%23373940%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2256.1953125%22%20y%3D%2279.5%22%3EImage%3Cbr%3EError%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
+                        };
+                        
+                        const colDiv = document.createElement('div');
+                        colDiv.className = 'col-md-2 col-sm-3 col-4';
+                        colDiv.appendChild(imgElement);
+                        
+                        imageGallery.appendChild(colDiv);
+                    });
+                } else {
+                    throw new Error("Invalid test images response format");
+                }
+            } catch (error) {
+                console.error('Error loading test images:', error);
+                document.getElementById('imageGallery').innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <p>Error loading test images: ${error.message}</p>
+                            <p>Please check your API server configuration.</p>
+                            <button class="btn btn-primary mt-3" onclick="verifyApiConnections()">Retry Connection Check</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        async function loadRandomImages() {
+            try {
+                // Show loading indicator
+                const imageGallery = document.getElementById('imageGallery');
+                imageGallery.innerHTML = '<div class="col-12 text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+                
+                console.log("Fetching images from API...");
+                
+                // Fetch random images from our API
+                const response = await fetch(`${LPR_API}/random_images/?count=30`);
+                console.log("API Response status:", response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`Error fetching images: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log("API Response data:", data);
+                
+                // Clear gallery
+                imageGallery.innerHTML = '';
+                
+                // Check if the API returned an error
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // If data is an array, add images
+                if (Array.isArray(data)) {
+                    if (data.length === 0) {
+                        imageGallery.innerHTML = `<div class="alert alert-warning">No images found in dataset</div>`;
+                        return;
+                    }
+                    
+                    console.log(`Adding ${data.length} images to gallery`);
+                    
+                    // Add each image to the gallery
+                    data.forEach((imagePath, index) => {
+                        // Create full URL
+                        const fullImageUrl = `${LPR_API}${imagePath}`;
+                        console.log(`Image ${index+1} URL:`, fullImageUrl);
+                        
+                        const imgElement = document.createElement('img');
+                        imgElement.src = fullImageUrl;
+                        imgElement.className = 'car-image';
+                        imgElement.alt = `Car ${index + 1}`;
+                        imgElement.addEventListener('click', () => selectImage(imgElement, fullImageUrl));
+                        
+                        // Add error handler to diagnose image loading issues
+                        imgElement.onerror = () => {
+                            console.error(`Failed to load image: ${fullImageUrl}`);
+                            imgElement.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22200%22%20height%3D%22150%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20150%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_189b385cf21%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A10pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_189b385cf21%22%3E%3Crect%20width%3D%22200%22%20height%3D%22150%22%20fill%3D%22%23373940%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2256.1953125%22%20y%3D%2279.5%22%3EImage%3Cbr%3EError%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
+                        };
+                        
+                        const colDiv = document.createElement('div');
+                        colDiv.className = 'col-md-2 col-sm-3 col-4';
+                        colDiv.appendChild(imgElement);
+                        
+                        imageGallery.appendChild(colDiv);
+                    });
+                } else {
+                    imageGallery.innerHTML = `<div class="alert alert-danger">Unexpected API response format</div>`;
+                    console.error("Unexpected response format:", data);
+                }
+            } catch (error) {
+                console.error('Error loading images:', error);
+                document.getElementById('imageGallery').innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <p>Error loading images: ${error.message}</p>
+                            <p>Trying fallback test images...</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Try fallback test images
+                try {
+                    const fallbackResponse = await fetch(`${LPR_API}/test_images/?count=30`);
+                    if (!fallbackResponse.ok) {
+                        throw new Error(`Failed to load test images: ${fallbackResponse.status}`);
+                    }
+                    
+                    const testImages = await fallbackResponse.json();
+                    
+                    // Clear gallery
+                    const imageGallery = document.getElementById('imageGallery');
+                    imageGallery.innerHTML = '';
+                    
+                    // Add test images
+                    if (Array.isArray(testImages)) {
+                        testImages.forEach((imagePath, index) => {
+                            const fullImageUrl = `${LPR_API}${imagePath}`;
+                            
+                            const imgElement = document.createElement('img');
+                            imgElement.src = fullImageUrl;
+                            imgElement.className = 'car-image';
+                            imgElement.alt = `Test ${index + 1}`;
+                            imgElement.addEventListener('click', () => selectImage(imgElement, fullImageUrl));
+                            
+                            const colDiv = document.createElement('div');
+                            colDiv.className = 'col-md-2 col-sm-3 col-4';
+                            colDiv.appendChild(imgElement);
+                            
+                            imageGallery.appendChild(colDiv);
+                        });
+                    }
+                } catch (fallbackError) {
+                    console.error('Fallback image loading failed:', fallbackError);
+                    document.getElementById('imageGallery').innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-danger">
+                                <p>All image loading methods failed.</p>
+                                <p>Original error: ${error.message}</p>
+                                <p>Fallback error: ${fallbackError.message}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        function selectImage(imgElement, imagePath) {
+            // Clear previous selection
+            document.querySelectorAll('.car-image').forEach(img => {
+                img.classList.remove('selected');
+            });
+            
+            // Select this image
+            imgElement.classList.add('selected');
+            selectedImage = imagePath;
+            
+            document.getElementById('processSelected').disabled = false;
+        }
+        
+        async function processSelectedImage() {
+            if (!selectedImage) return;
+            
+            try {
+                // Show loading state
+                document.getElementById('customerInfo').innerHTML = '<div class="alert alert-info">Processing image...</div>';
+                document.getElementById('recommendations').innerHTML = '';
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('processedImage').src = '';
+                
+                // Create form data
+                const formData = new FormData();
+                
+                // We need to fetch the image and create a blob
+                const imageResponse = await fetch(selectedImage);
+                const imageBlob = await imageResponse.blob();
+                formData.append('file', imageBlob, 'car.jpg');
+                
+                // Call LPR API
+                const lprResponse = await fetch(`${LPR_API}/detect_plate/`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!lprResponse.ok) {
+                    throw new Error(`LPR API error: ${lprResponse.status}`);
+                }
+                
+                const lprData = await lprResponse.json();
+                
+                // Display processed image
+                if (lprData.processed_image) {
+                    document.getElementById('processedImage').src = `data:image/jpeg;base64,${lprData.processed_image}`;
+                } else {
+                    document.getElementById('processedImage').src = selectedImage;
+                }
+                
+                // Process license plate detection results
+                if (lprData.plates && lprData.plates.length > 0) {
+                    const plateNumber = lprData.plates[0].text;
+                    
+                    try {
+                        // Get customer info
+                        const customerResponse = await fetch(`${CUSTOMER_API}/customer/${plateNumber}`);
+                        
+                        if (!customerResponse.ok) {
+                            throw new Error(`Customer API error: ${customerResponse.status}`);
+                        }
+                        
+                        const customerData = await customerResponse.json();
+                        displayResults(lprData.plates[0], customerData);
+                        
+                    } catch (customerError) {
+                        console.error('Customer API error:', customerError);
+                        document.getElementById('customerInfo').innerHTML = `
+                            <div class="alert alert-danger">
+                                <p>Error fetching customer data: ${customerError.message}</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    document.getElementById('customerInfo').innerHTML = `
+                        <div class="alert alert-warning">
+                            <p>No license plate detected in the image.</p>
+                        </div>
+                    `;
+                    document.getElementById('recommendations').innerHTML = '';
+                }
+                
+            } catch (error) {
+                console.error('Error processing image:', error);
+                document.getElementById('customerInfo').innerHTML = `
+                    <div class="alert alert-danger">
+                        <p>Error processing image: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function displayResults(plateData, customerData) {
+            const customerInfoDiv = document.getElementById('customerInfo');
+            const recommendationsDiv = document.getElementById('recommendations');
+            
+            if (customerData.found) {
+                const customer = customerData.customer;
+                
+                customerInfoDiv.innerHTML = `
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">${customer.name}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Plate: ${customer.license_plate}</h6>
+                            <p><strong>Last Visit:</strong> ${customer.last_visit}</p>
+                            <p><strong>Total Visits:</strong> ${customer.total_visits}</p>
+                            <p><strong>Last Order:</strong> ${Array.isArray(customer.last_order) ? customer.last_order.join(', ') : customer.last_order}</p>
+                            <p><strong>Preferred Time:</strong> ${customer.preferred_time}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Display recommendations
+                let recHTML = '<div class="list-group">';
+                customerData.recommendations.forEach(item => {
+                    recHTML += `<div class="list-group-item">${item}</div>`;
+                });
+                recHTML += '</div>';
+                recommendationsDiv.innerHTML = recHTML;
+                
+            } else {
+                customerInfoDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <p>License plate detected: ${plateData.text} (Confidence: ${(plateData.confidence * 100).toFixed(2)}%)</p>
+                        <p>No customer record found for this plate.</p>
+                    </div>
+                `;
+                recommendationsDiv.innerHTML = `
+                    <div class="alert alert-info">
+                        <p>This appears to be a new customer!</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Load images when page loads
+        document.addEventListener('DOMContentLoaded', verifyApiConnections);
+    </script>
+</body>
+</html>

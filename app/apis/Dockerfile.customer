@@ -1,0 +1,21 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copy requirements
+COPY requirements.customer.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.customer.txt
+
+# Copy source code
+COPY customer_api.py .
+
+# Create data directory
+RUN mkdir -p /app/data
+
+# Expose port
+EXPOSE 8001
+
+# Run the service
+CMD ["python", "-m", "uvicorn", "customer_api:app", "--host", "0.0.0.0", "--port", "8001"]

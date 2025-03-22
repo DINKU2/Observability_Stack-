@@ -1,0 +1,143 @@
+license_plate,name,last_order,last_visit,total_visits,preferred_time
+chiO OSE,David Miller,"['McFlurry', 'Big Mac', 'Salad']",2025-03-21 20:51:47,14,16:00
+DL?C N 5617,Maria Martinez,"['Salad', 'McFlurry', 'French Fries']",2025-03-21 20:51:51,12,13:00
+HR 26 BC 5514,Susan Lee,['McFlurry'],2025-03-21 20:51:51,16,14:00
+KAISER,Susan Lee,['Salad'],2025-03-21 20:51:53,5,14:00
+KAISER,Jennifer Garcia,['Chicken McNuggets'],2025-03-21 20:51:53,2,17:00
+Rouf RAILS,Maria Martinez,"['Apple Pie', 'Chicken McNuggets', 'McFlurry', 'Quarter Pounder']",2025-03-21 20:51:53,9,21:00
+TN 21BC 6225,William Jones,['McChicken'],2025-03-21 20:51:53,9,20:00
+MH1ZNE B922,John Smith,['Happy Meal'],2025-03-21 20:51:54,18,16:00
+MH1ZNE 8922,Jennifer Garcia,['McFlurry'],2025-03-21 20:51:54,8,10:00
+HR 26 BC 5514,Sarah Davis,"['Fish Fillet', 'Salad', 'Cheeseburger']",2025-03-21 20:51:55,17,11:00
+Who owns this,Maria Martinez,"['Chicken McNuggets', 'Salad']",2025-03-21 20:51:55,6,10:00
+GOOGLE,James Johnson,"['French Fries', 'Happy Meal']",2025-03-21 20:51:55,19,20:00
+MH 208020,Emma Wilson,"['Chicken McNuggets', 'McChicken']",2025-03-21 20:51:56,20,19:00
+HRZGCE1485,David Miller,"['Fish Fillet', 'Chicken McNuggets', 'McChicken', 'Chicken Sandwich']",2025-03-21 20:51:57,10,13:00
+DZIZ YXR,Sarah Davis,['McChicken'],2025-03-21 20:51:57,20,11:00
+HH15BD8877,Emma Wilson,"['McFlurry', 'Quarter Pounder', 'Salad', 'French Fries']",2025-03-21 20:51:59,14,18:00
+KL544-2670,Michael Brown,"['Quarter Pounder', 'Fish Fillet', 'French Fries', 'Chicken Sandwich']",2025-03-21 20:52:01,8,19:00
+P262 FDX,Robert Taylor,"['Salad', 'Chicken McNuggets']",2025-03-21 20:52:03,7,21:00
+15-LK-10898,Lisa Anderson,"['Chicken McNuggets', 'Apple Pie']",2025-03-21 20:52:06,16,11:00
+[noiacop],Susan Lee,"['French Fries', 'Quarter Pounder', 'Fish Fillet', 'Apple Pie']",2025-03-21 20:52:09,10,14:00
+15-LK-10898,Lisa Anderson,['Big Mac'],2025-03-21 20:52:10,13,20:00
+LR33 TEE,David Miller,"['Chicken Sandwich', 'McChicken', 'Apple Pie']",2025-03-21 20:52:11,5,21:00
+LR33 TEE,James Johnson,"['Chicken McNuggets', 'Salad']",2025-03-21 20:52:12,9,15:00
+PGoMN112,Emma Wilson,['Salad'],2025-03-21 20:52:12,12,10:00
+LR33 TEE,Jennifer Garcia,"['Chicken Sandwich', 'Cheeseburger']",2025-03-21 20:52:16,2,10:00
+8 O01,Emma Wilson,"['Happy Meal', 'Fish Fillet', 'Cheeseburger', 'Chicken McNuggets']",2025-03-21 20:52:18,6,14:00
+Go gle,John Smith,"['Salad', 'Apple Pie', 'Big Mac', 'McFlurry']",2025-03-21 20:52:18,14,15:00
+self-driving car,William Jones,"['Big Mac', 'Salad', 'Fish Fillet', 'Cheeseburger']",2025-03-21 20:52:18,18,11:00
+pring,Lisa Anderson,"['McFlurry', 'French Fries', 'Fish Fillet', 'Happy Meal']",2025-03-21 20:52:18,17,15:00
+KA 03 AB,Jennifer Garcia,['Happy Meal'],2025-03-21 20:52:19,4,21:00
+AB 44,Michael Brown,"['Happy Meal', 'Chicken Sandwich', 'Apple Pie']",2025-03-21 20:52:23,20,19:00
+B2228 HM,Sarah Davis,['Happy Meal'],2025-03-21 20:52:23,16,10:00
+VIPER,Jennifer Garcia,"['French Fries', 'Quarter Pounder', 'Chicken Sandwich', 'Salad']",2025-03-21 20:52:24,4,11:00
+Ms6s YOB,Emma Wilson,['McFlurry'],2025-03-21 20:52:25,14,14:00
+"""IN 4268",John Smith,"['Cheeseburger', 'Chicken McNuggets']",2025-03-21 20:52:25,3,19:00
+MH 208020,James Johnson,"['McChicken', 'Apple Pie']",2025-03-21 20:52:25,8,14:00
+5B412344,James Johnson,"['Cheeseburger', 'McChicken']",2025-03-21 20:52:26,11,10:00
+HR 26 BC 5514,Robert Taylor,"['Salad', 'Fish Fillet', 'Apple Pie']",2025-03-21 20:52:26,11,16:00
+Ms6s YOB,Sarah Davis,"['McFlurry', 'Cheeseburger', 'Apple Pie']",2025-03-21 20:52:27,2,14:00
+DZIZ YXR,Sarah Davis,"['French Fries', 'Happy Meal', 'Quarter Pounder', 'Chicken McNuggets']",2025-03-21 20:52:27,14,17:00
+MH 208020,Emma Wilson,"['Happy Meal', 'Fish Fillet', 'Quarter Pounder']",2025-03-21 20:52:28,5,15:00
+771278,William Jones,"['Chicken Sandwich', 'Quarter Pounder', 'McChicken', 'Fish Fillet']",2025-03-21 20:52:29,14,16:00
+MH 20EE 7598,Sarah Davis,"['McChicken', 'Chicken McNuggets']",2025-03-21 20:52:30,5,12:00
+LANBC,Sarah Davis,"['Cheeseburger', 'Big Mac']",2025-03-21 20:52:30,16,13:00
+BRIT 0001,James Johnson,"['French Fries', 'Big Mac', 'Chicken McNuggets', 'Apple Pie']",2025-03-21 20:52:31,5,20:00
+DZIZ YXR,Michael Brown,['Salad'],2025-03-21 20:52:31,5,13:00
+5B412344,David Miller,"['Chicken Sandwich', 'French Fries', 'Salad']",2025-03-21 20:52:32,2,21:00
+KLO1CA2555,David Miller,['Chicken Sandwich'],2025-03-21 20:52:32,7,11:00
+MH 20EE 7598,William Jones,"['Big Mac', 'Chicken McNuggets', 'Quarter Pounder', 'Fish Fillet']",2025-03-21 20:52:32,11,12:00
+LAWYER,Emma Wilson,"['French Fries', 'McFlurry', 'Cheeseburger', 'Fish Fillet']",2025-03-21 20:52:33,17,14:00
+PGoMN112,John Smith,['Fish Fillet'],2025-03-21 20:52:33,4,20:00
+[Mansa,Jennifer Garcia,"['Fish Fillet', 'Chicken Sandwich']",2025-03-21 20:52:35,3,18:00
+RXGI GDU,Sarah Davis,"['Big Mac', 'Chicken Sandwich', 'McFlurry']",2025-03-21 20:52:35,20,14:00
+SDN7484U,James Johnson,['Happy Meal'],2025-03-21 20:52:36,11,13:00
+HR 26 BC 5514,Robert Taylor,['Big Mac'],2025-03-21 20:52:37,8,19:00
+KL544-2670,Michael Brown,"['McFlurry', 'Salad']",2025-03-21 20:52:37,3,14:00
+Ms6s YOB,Robert Taylor,"['Big Mac', 'Salad', 'Quarter Pounder', 'Fish Fillet']",2025-03-21 20:52:38,4,14:00
+HR 26 BC 5514,David Miller,['French Fries'],2025-03-21 20:52:38,7,15:00
+G526 JHD,John Smith,"['Chicken Sandwich', 'Quarter Pounder']",2025-03-21 20:52:41,8,13:00
+MK-35-32,Sarah Davis,['Big Mac'],2025-03-21 20:52:41,4,18:00
+DL?C N 5617,William Jones,"['Apple Pie', 'Happy Meal']",2025-03-21 20:52:42,10,14:00
+HH42 DE4433,William Jones,"['McFlurry', 'Fish Fillet']",2025-03-21 20:52:42,18,11:00
+[Mansa,David Miller,"['Fish Fillet', 'Chicken Sandwich', 'McChicken']",2025-03-21 20:52:42,12,19:00
+BR' 9044,Emma Wilson,"['Salad', 'Quarter Pounder']",2025-03-21 20:52:43,3,10:00
+HH15BD8877,William Jones,"['Big Mac', 'French Fries', 'Salad', 'Chicken McNuggets']",2025-03-21 20:52:43,11,14:00
+OHG BCKY,Lisa Anderson,"['McChicken', 'Salad', 'Quarter Pounder', 'McFlurry']",2025-03-21 20:52:45,11,12:00
+Look at her butt,Robert Taylor,['Big Mac'],2025-03-21 20:52:45,4,14:00
+PGoMN112,Michael Brown,"['French Fries', 'Big Mac', 'Happy Meal']",2025-03-21 20:52:45,10,21:00
+GBIB TCE,Robert Taylor,"['McFlurry', 'French Fries', 'Quarter Pounder']",2025-03-21 20:52:46,16,15:00
+DL?C N 5617,James Johnson,"['Happy Meal', 'McChicken']",2025-03-21 20:52:46,3,14:00
+BR' 9044,David Miller,"['Fish Fillet', 'Happy Meal', 'Quarter Pounder', 'Cheeseburger']",2025-03-21 20:52:46,14,17:00
+DAN54P,Maria Martinez,"['McFlurry', 'Big Mac']",2025-03-21 20:52:47,5,13:00
+"""HH12867237",Lisa Anderson,"['Apple Pie', 'Cheeseburger', 'Happy Meal', 'Quarter Pounder']",2025-03-21 20:52:47,6,17:00
+JA62 UAR,Emma Wilson,"['McFlurry', 'Chicken McNuggets', 'Apple Pie']",2025-03-21 20:52:48,18,17:00
+BR' 9044,Susan Lee,['Quarter Pounder'],2025-03-21 20:52:49,14,16:00
+DZIZ YXR,Sarah Davis,['Chicken McNuggets'],2025-03-21 20:52:49,5,19:00
+PGoMN112,Lisa Anderson,['Fish Fillet'],2025-03-21 20:52:49,3,15:00
+66887,Jennifer Garcia,"['Chicken McNuggets', 'Quarter Pounder', 'McChicken']",2025-03-21 20:52:50,20,14:00
+G526 JHD,Robert Taylor,"['French Fries', 'Chicken Sandwich']",2025-03-21 20:52:50,8,19:00
+Ka-09,John Smith,"['Apple Pie', 'Quarter Pounder']",2025-03-21 20:52:51,2,11:00
+01 Cc,Susan Lee,"['McFlurry', 'Big Mac', 'Cheeseburger']",2025-03-21 20:52:51,8,10:00
+700 V,Michael Brown,"['Salad', 'Apple Pie']",2025-03-21 20:52:53,4,20:00
+B2228 HM,Robert Taylor,"['Salad', 'French Fries']",2025-03-21 20:52:54,4,21:00
+RushLar,David Miller,"['Fish Fillet', 'McChicken', 'French Fries']",2025-03-21 20:52:56,6,20:00
+[Mansa,Robert Taylor,"['Quarter Pounder', 'Chicken Sandwich']",2025-03-21 20:52:56,1,15:00
+E8 @LA,John Smith,"['Salad', 'Chicken Sandwich', 'French Fries', 'Apple Pie']",2025-03-21 20:52:56,4,16:00
+Ka-09,William Jones,"['McChicken', 'Fish Fillet', 'Happy Meal', 'Apple Pie']",2025-03-21 20:52:56,14,13:00
+HR 26 BC 5514,Robert Taylor,['Fish Fillet'],2025-03-21 20:52:56,13,19:00
+[noiacop],James Johnson,"['Chicken McNuggets', 'Salad', 'Fish Fillet', 'Apple Pie']",2025-03-21 20:52:57,9,13:00
+HR 26 BC 5514,Lisa Anderson,"['Apple Pie', 'Big Mac', 'Salad', 'Chicken Sandwich']",2025-03-21 20:52:57,2,14:00
+[s4523,Michael Brown,"['French Fries', 'McChicken']",2025-03-21 20:52:58,11,13:00
+DL?C N 5617,David Miller,"['Fish Fillet', 'Chicken McNuggets']",2025-03-21 20:52:58,16,15:00
+Ka-09,William Jones,"['Fish Fillet', 'Happy Meal', 'Chicken Sandwich']",2025-03-21 20:52:59,12,15:00
+pring,Sarah Davis,"['Big Mac', 'Fish Fillet']",2025-03-21 20:53:00,18,15:00
+KA 03 AB,James Johnson,['Quarter Pounder'],2025-03-21 20:53:00,14,14:00
+KA 03 AB,David Miller,['Quarter Pounder'],2025-03-21 20:53:01,13,15:00
+EAGLE,Lisa Anderson,"['McFlurry', 'Fish Fillet']",2025-03-21 20:53:03,1,18:00
+14 BN 7077,Jennifer Garcia,"['Apple Pie', 'Fish Fillet', 'Cheeseburger']",2025-03-21 20:53:03,3,13:00
+GBIB TCE,Maria Martinez,['McFlurry'],2025-03-21 20:53:03,18,10:00
+JA62 UAR,Susan Lee,['McFlurry'],2025-03-21 20:53:03,4,17:00
+KL544-2670,Lisa Anderson,"['McFlurry', 'Quarter Pounder', 'Chicken Sandwich']",2025-03-21 20:53:04,20,18:00
+KLO1CA2555,Susan Lee,"['McFlurry', 'Chicken Sandwich']",2025-03-21 20:53:05,7,18:00
+MH 208020,Sarah Davis,"['McChicken', 'Fish Fillet']",2025-03-21 20:53:05,19,19:00
+AB 44,Michael Brown,"['Big Mac', 'Chicken McNuggets']",2025-03-21 20:53:05,19,13:00
+P3RV P,Susan Lee,['Big Mac'],2025-03-21 20:53:05,17,18:00
+Who owns this,John Smith,['Happy Meal'],2025-03-21 20:53:06,11,17:00
+GOOGLE,Robert Taylor,"['Fish Fillet', 'Cheeseburger', 'Chicken McNuggets', 'Big Mac']",2025-03-21 20:53:06,6,11:00
+771278,Jennifer Garcia,['Cheeseburger'],2025-03-21 20:53:06,11,18:00
+DL49 AK49,Jennifer Garcia,"['McFlurry', 'Big Mac', 'Quarter Pounder']",2025-03-21 20:53:06,11,20:00
+KA 03 AB,Jennifer Garcia,"['Chicken McNuggets', 'Cheeseburger', 'Big Mac']",2025-03-21 20:53:07,6,14:00
+LR33 TEE,William Jones,"['McFlurry', 'McChicken']",2025-03-21 20:53:08,3,21:00
+Priv ATE,James Johnson,"['McFlurry', 'Fish Fillet', 'McChicken', 'Chicken Sandwich']",2025-03-21 20:53:09,9,17:00
+CRAIG,Emma Wilson,"['Big Mac', 'Chicken Sandwich', 'Chicken McNuggets', 'Salad']",2025-03-21 20:53:10,1,17:00
+DL49 AK49,John Smith,"['Chicken McNuggets', 'French Fries']",2025-03-21 20:53:11,17,20:00
+15-LK-10898,Robert Taylor,['Salad'],2025-03-21 20:53:11,13,18:00
+BKTP : 665|,Sarah Davis,"['Salad', 'Fish Fillet', 'Chicken McNuggets', 'French Fries']",2025-03-21 20:53:11,13,13:00
+CRAIG,James Johnson,"['French Fries', 'McFlurry', 'Cheeseburger', 'Chicken Sandwich']",2025-03-21 20:53:12,19,18:00
+Priv ATE,Sarah Davis,"['McChicken', 'Cheeseburger', 'Fish Fillet']",2025-03-21 20:53:17,13,17:00
+G526 JHD,Robert Taylor,"['French Fries', 'Chicken McNuggets', 'Big Mac', 'Chicken Sandwich']",2025-03-21 20:53:18,12,14:00
+[Mansa,Maria Martinez,['Apple Pie'],2025-03-21 20:53:18,6,20:00
+MEDYA,James Johnson,['French Fries'],2025-03-21 20:53:19,2,21:00
+BSMART2,Jennifer Garcia,"['Big Mac', 'Chicken McNuggets']",2025-03-21 20:53:19,20,12:00
+Ka-09,James Johnson,"['Fish Fillet', 'Big Mac']",2025-03-21 20:53:20,5,13:00
+BRIT 0001,Susan Lee,"['Fish Fillet', 'McFlurry', 'Cheeseburger']",2025-03-21 20:53:20,15,10:00
+LR33 TEE,Robert Taylor,"['Salad', 'Chicken McNuggets']",2025-03-21 20:53:21,9,20:00
+KL01CA2555,Jennifer Garcia,"['Quarter Pounder', 'French Fries', 'McChicken', 'Chicken Sandwich']",2025-03-21 21:44:09,1,18:00
+PGMN112,Susan Lee,"['Cheeseburger', 'Chicken McNuggets', 'McFlurry', 'Happy Meal']",2025-03-21 21:44:30,8,16:00
+PRENLP,Robert Taylor,['Happy Meal'],2025-03-21 21:45:23,12,12:00
+DZI7YXR,Michael Brown,"['Apple Pie', 'Salad', 'Big Mac']",2025-03-21 21:46:26,10,21:00
+PUI8BES,Maria Martinez,"['McFlurry', 'Chicken Sandwich']",2025-03-21 21:46:48,8,11:00
+80211N,William Jones,"['McFlurry', 'Cheeseburger', 'McChicken', 'Fish Fillet']",2025-03-21 21:47:27,7,17:00
+YSX213,William Jones,"['Salad', 'Fish Fillet']",2025-03-21 21:48:11,3,20:00
+6526JHD,Susan Lee,"['Big Mac', 'Quarter Pounder']",2025-03-21 21:48:30,20,14:00
+MH01AV8866,John Smith,"['Happy Meal', 'McChicken', 'French Fries']",2025-03-21 21:48:59,19,19:00
+TN37CS2765,Sarah Davis,['McChicken'],2025-03-21 21:49:38,18,13:00
+WOR516K,John Smith,"['Quarter Pounder', 'McChicken', 'Cheeseburger', 'Apple Pie']",2025-03-21 21:50:16,18,19:00
+MH12BG7237,Lisa Anderson,"['Quarter Pounder', 'Chicken McNuggets', 'French Fries', 'Happy Meal']",2025-03-21 21:50:42,9,17:00
+BJR216,Emma Wilson,"['Salad', 'Chicken Sandwich', 'Quarter Pounder']",2025-03-21 21:51:10,15,20:00
+ALR486,Susan Lee,['Apple Pie'],2025-03-21 21:51:50,9,10:00
+TM21BY0166,Lisa Anderson,['Big Mac'],2025-03-21 21:53:16,13,14:00
+M666YOB,Maria Martinez,"['Chicken Sandwich', 'Apple Pie', 'McFlurry']",2025-03-21 21:54:23,15,20:00
+AFR2011,Susan Lee,"['Big Mac', 'Apple Pie']",2025-03-21 21:54:48,5,10:00
