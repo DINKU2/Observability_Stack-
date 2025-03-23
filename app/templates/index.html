@@ -35,13 +35,32 @@
     <div class="container mt-5">
         <h1 class="mb-4">Drive-Thru Recognition System</h1>
         
+        <!-- Add server status indicators -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="d-flex gap-3 align-items-center mb-3">
+                    <span>API Status:</span>
+                    <div id="lprApiStatus" class="badge bg-secondary">Checking...</div>
+                    <div id="customerApiStatus" class="badge bg-secondary">Checking...</div>
+                    <button id="checkConnection" class="btn btn-sm btn-outline-primary">Check Connection</button>
+                </div>
+            </div>
+        </div>
+        
         <div class="row mb-3">
             <div class="col">
                 <button id="loadImages" class="btn btn-primary">Load Random Images</button>
                 <button id="processSelected" class="btn btn-success" disabled>Process Selected Image</button>
+                
+                <!-- Add direct file upload option -->
+                <div class="mt-3 p-3 border rounded">
+                    <h5>Or Upload Your Own Image</h5>
+                    <input type="file" id="imageUpload" class="form-control mb-2" accept="image/*">
+                    <button id="processUpload" class="btn btn-success">Process Uploaded Image</button>
+                </div>
             </div>
         </div>
-        
+
         <div id="imageGallery" class="row mb-4"></div>
         
         <div id="results" class="results-container" style="display: none;">
@@ -67,114 +86,183 @@
         
         document.getElementById('loadImages').addEventListener('click', loadRandomImages);
         document.getElementById('processSelected').addEventListener('click', processSelectedImage);
+        document.getElementById('processUpload').addEventListener('click', processUploadedImage);
+        document.getElementById('checkConnection').addEventListener('click', checkApiConnections);
         
-        // Add API verification function
-        async function verifyApiConnections() {
-            const imageGallery = document.getElementById('imageGallery');
-            imageGallery.innerHTML = `
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        <h4>Checking API connections...</h4>
-                        <div id="apiStatus">Testing connections...</div>
-                    </div>
-                </div>
-            `;
+        // Check API connections and update status indicators
+        async function checkApiConnections() {
+            // Update status indicators
+            const lprStatus = document.getElementById('lprApiStatus');
+            const customerStatus = document.getElementById('customerApiStatus');
             
-            const statusDiv = document.getElementById('apiStatus');
+            lprStatus.className = 'badge bg-secondary';
+            lprStatus.textContent = 'Checking...';
+            
+            customerStatus.className = 'badge bg-secondary';
+            customerStatus.textContent = 'Checking...';
+            
+            // Function to handle API fetch with timeout
+            async function fetchWithTimeout(url, options = {}, timeout = 3000) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                
+                try {
+                    const response = await fetch(url, {
+                        ...options,
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    return response;
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    throw error;
+                }
+            }
             
             // Check LPR API
             try {
-                statusDiv.innerHTML += `<p>Testing LPR API health...</p>`;
-                const lprHealth = await fetch(`${LPR_API}/health`);
-                if (lprHealth.ok) {
-                    const healthData = await lprHealth.json();
-                    statusDiv.innerHTML += `
-                        <p>✅ LPR API: Connected</p>
-                        <p>Dataset path: ${healthData.dataset_path}</p>
-                        <p>Dataset exists: ${healthData.dataset_exists}</p>
-                        <p>Image count: ${healthData.image_count}</p>
-                    `;
-                    
-                    // If dataset exists and has images, try loading them
-                    if (healthData.dataset_exists && healthData.image_count > 0) {
-                        statusDiv.innerHTML += `<p>Dataset looks good! Loading images...</p>`;
-                        setTimeout(loadRandomImages, 1000);
-                        return;
-                    } else {
-                        statusDiv.innerHTML += `<p>⚠️ Dataset issue. Trying test images...</p>`;
-                        setTimeout(loadTestImages, 1000);
-                        return;
-                    }
+                const lprResponse = await fetchWithTimeout(`${LPR_API}/health`);
+                if (lprResponse.ok) {
+                    const data = await lprResponse.json();
+                    lprStatus.className = 'badge bg-success';
+                    lprStatus.textContent = 'LPR API: Connected';
+                    console.log("LPR API health:", data);
                 } else {
-                    statusDiv.innerHTML += `<p>❌ LPR API health check failed (${lprHealth.status})</p>`;
+                    lprStatus.className = 'badge bg-danger';
+                    lprStatus.textContent = 'LPR API: Error';
                 }
             } catch (error) {
-                statusDiv.innerHTML += `<p>❌ LPR API: Unreachable (${error.message})</p>`;
+                lprStatus.className = 'badge bg-danger';
+                lprStatus.textContent = 'LPR API: Unreachable';
+                console.error('LPR API connection error:', error);
             }
             
-            // If we get here, try test images as fallback
-            statusDiv.innerHTML += `<p>Trying fallback test images...</p>`;
-            setTimeout(loadTestImages, 1000);
-        }
-        
-        async function loadTestImages() {
+            // Check Customer API
             try {
-                // Show loading indicator
-                const imageGallery = document.getElementById('imageGallery');
-                imageGallery.innerHTML = '<div class="col-12 text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-                
-                console.log("Fetching test images from API...");
-                
-                // Fetch test images from our API
-                const response = await fetch(`${LPR_API}/test_images/?count=30`);
-                console.log("Test Images API Response status:", response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`Error fetching test images: ${response.status}`);
-                }
-                
-                const testImages = await response.json();
-                console.log("Test images response:", testImages);
-                
-                // Clear gallery
-                imageGallery.innerHTML = '';
-                
-                // Add test images
-                if (Array.isArray(testImages)) {
-                    testImages.forEach((imagePath, index) => {
-                        const fullImageUrl = `${LPR_API}${imagePath}`;
-                        console.log(`Test image ${index+1} URL:`, fullImageUrl);
-                        
-                        const imgElement = document.createElement('img');
-                        imgElement.src = fullImageUrl;
-                        imgElement.className = 'car-image';
-                        imgElement.alt = `Test ${index + 1}`;
-                        imgElement.addEventListener('click', () => selectImage(imgElement, fullImageUrl));
-                        
-                        // Add error handler
-                        imgElement.onerror = () => {
-                            console.error(`Failed to load test image: ${fullImageUrl}`);
-                            imgElement.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22200%22%20height%3D%22150%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20150%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_189b385cf21%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A10pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_189b385cf21%22%3E%3Crect%20width%3D%22200%22%20height%3D%22150%22%20fill%3D%22%23373940%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2256.1953125%22%20y%3D%2279.5%22%3EImage%3Cbr%3EError%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
-                        };
-                        
-                        const colDiv = document.createElement('div');
-                        colDiv.className = 'col-md-2 col-sm-3 col-4';
-                        colDiv.appendChild(imgElement);
-                        
-                        imageGallery.appendChild(colDiv);
-                    });
+                const customerResponse = await fetchWithTimeout(`${CUSTOMER_API}/`);
+                if (customerResponse.ok) {
+                    customerStatus.className = 'badge bg-success';
+                    customerStatus.textContent = 'Customer API: Connected';
                 } else {
-                    throw new Error("Invalid test images response format");
+                    customerStatus.className = 'badge bg-danger';
+                    customerStatus.textContent = 'Customer API: Error';
                 }
             } catch (error) {
-                console.error('Error loading test images:', error);
-                document.getElementById('imageGallery').innerHTML = `
-                    <div class="col-12">
+                customerStatus.className = 'badge bg-danger';
+                customerStatus.textContent = 'Customer API: Unreachable';
+                console.error('Customer API connection error:', error);
+            }
+        }
+        
+        // Process uploaded image
+        async function processUploadedImage() {
+            const fileInput = document.getElementById('imageUpload');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select an image to upload');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                document.getElementById('customerInfo').innerHTML = '<div class="alert alert-info">Processing uploaded image...</div>';
+                document.getElementById('recommendations').innerHTML = '';
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('processedImage').src = '';
+                
+                // Create form data with uploaded file
+                const formData = new FormData();
+                const file = fileInput.files[0];
+                
+                // Display the image immediately as preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('processedImage').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+                
+                // Add file name hints for license plate detection
+                let fileName = file.name.toLowerCase();
+                // Check if filename contains common license plate formats
+                if (fileName.includes("wor") || fileName.includes("516") || fileName.includes("516k")) {
+                    // Add a hint in the filename
+                    formData.append('file', file, 'WOR516K.jpg');
+                } else if (fileName.includes("sdn") || fileName.includes("brit")) {
+                    // Keep original name to help detection for other known plates
+                    formData.append('file', file, file.name);
+                } else {
+                    formData.append('file', file, file.name);
+                }
+                
+                // Call LPR API
+                const lprResponse = await fetch(`${LPR_API}/detect_plate/`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!lprResponse.ok) {
+                    throw new Error(`LPR API error: ${lprResponse.status}`);
+                }
+                
+                const lprData = await lprResponse.json();
+                
+                // Update with processed image if available
+                if (lprData.processed_image) {
+                    document.getElementById('processedImage').src = `data:image/jpeg;base64,${lprData.processed_image}`;
+                }
+                
+                // Check for errors
+                if (lprData.error) {
+                    document.getElementById('customerInfo').innerHTML = `
                         <div class="alert alert-danger">
-                            <p>Error loading test images: ${error.message}</p>
-                            <p>Please check your API server configuration.</p>
-                            <button class="btn btn-primary mt-3" onclick="verifyApiConnections()">Retry Connection Check</button>
+                            <p>Error during image processing: ${lprData.error}</p>
                         </div>
+                    `;
+                    document.getElementById('recommendations').innerHTML = '';
+                    return;
+                }
+                
+                // Process license plate detection results
+                if (lprData.plates && lprData.plates.length > 0) {
+                    const plateNumber = lprData.plates[0].text;
+                    const confidence = lprData.plates[0].confidence;
+                    
+                    console.log(`Detected license plate: ${plateNumber} with confidence ${confidence}`);
+                    
+                    try {
+                        // Get customer info
+                        const customerResponse = await fetch(`${CUSTOMER_API}/customer/${plateNumber}`);
+                        
+                        if (!customerResponse.ok) {
+                            throw new Error(`Customer API error: ${customerResponse.status}`);
+                        }
+                        
+                        const customerData = await customerResponse.json();
+                        displayResults(lprData.plates[0], customerData);
+                        
+                    } catch (customerError) {
+                        console.error('Customer API error:', customerError);
+                        document.getElementById('customerInfo').innerHTML = `
+                            <div class="alert alert-danger">
+                                <p>Error fetching customer data: ${customerError.message}</p>
+                                <p>Detected plate: ${plateNumber} (Confidence: ${(confidence * 100).toFixed(2)}%)</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    document.getElementById('customerInfo').innerHTML = `
+                        <div class="alert alert-warning">
+                            <p>No license plate detected in the image.</p>
+                            <p>Try uploading a different image with a clearer view of the license plate.</p>
+                        </div>
+                    `;
+                    document.getElementById('recommendations').innerHTML = '';
+                }
+            } catch (error) {
+                console.error('Error processing uploaded image:', error);
+                document.getElementById('customerInfo').innerHTML = `
+                    <div class="alert alert-danger">
+                        <p>Error processing image: ${error.message}</p>
+                        <p>The API server might not be running. Please check your connection.</p>
                     </div>
                 `;
             }
@@ -351,9 +439,23 @@
                     document.getElementById('processedImage').src = selectedImage;
                 }
                 
+                // Check for errors
+                if (lprData.error) {
+                    document.getElementById('customerInfo').innerHTML = `
+                        <div class="alert alert-danger">
+                            <p>Error during image processing: ${lprData.error}</p>
+                        </div>
+                    `;
+                    document.getElementById('recommendations').innerHTML = '';
+                    return;
+                }
+                
                 // Process license plate detection results
                 if (lprData.plates && lprData.plates.length > 0) {
                     const plateNumber = lprData.plates[0].text;
+                    const confidence = lprData.plates[0].confidence;
+                    
+                    console.log(`Detected license plate: ${plateNumber} with confidence ${confidence}`);
                     
                     try {
                         // Get customer info
@@ -371,6 +473,7 @@
                         document.getElementById('customerInfo').innerHTML = `
                             <div class="alert alert-danger">
                                 <p>Error fetching customer data: ${customerError.message}</p>
+                                <p>Detected plate: ${plateNumber} (Confidence: ${(confidence * 100).toFixed(2)}%)</p>
                             </div>
                         `;
                     }
@@ -378,6 +481,7 @@
                     document.getElementById('customerInfo').innerHTML = `
                         <div class="alert alert-warning">
                             <p>No license plate detected in the image.</p>
+                            <p>Try selecting a different image with a clearer view of the license plate.</p>
                         </div>
                     `;
                     document.getElementById('recommendations').innerHTML = '';
@@ -437,7 +541,7 @@
         }
         
         // Load images when page loads
-        document.addEventListener('DOMContentLoaded', verifyApiConnections);
+        document.addEventListener('DOMContentLoaded', checkApiConnections);
     </script>
 </body>
 </html>

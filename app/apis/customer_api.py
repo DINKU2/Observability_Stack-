@@ -72,6 +72,47 @@ def startup_db_client():
         customer_db = pd.read_csv(db_path)
     else:
         customer_db = pd.DataFrame(columns=['license_plate', 'name', 'last_order', 'last_visit', 'total_visits', 'preferred_time'])
+    
+    # Ensure we have the WOR516K plate in the database - very important for demos
+    ensure_demo_data()
+
+def ensure_demo_data():
+    """Make sure important demo plates are in the database"""
+    global customer_db
+    
+    # Add WOR516K if not present
+    if 'WOR516K' not in customer_db['license_plate'].values:
+        wor_customer = {
+            'license_plate': 'WOR516K',
+            'name': 'Emma Wilson',
+            'last_order': "['Big Mac', 'Chicken McNuggets', 'McFlurry']",
+            'last_visit': time.strftime("%Y-%m-%d %H:%M:%S"),
+            'total_visits': 15,
+            'preferred_time': '18:00'
+        }
+        customer_db = pd.concat([customer_db, pd.DataFrame([wor_customer])], ignore_index=True)
+        
+        # Save to CSV
+        db_path = os.environ.get('CUSTOMER_DB_PATH', './data/customer_database.csv')
+        customer_db.to_csv(db_path, index=False)
+        print(f"Added demo plate WOR516K to database")
+
+    # Add SDN7484U if not present
+    if 'SDN7484U' not in customer_db['license_plate'].values:
+        sdn_customer = {
+            'license_plate': 'SDN7484U',
+            'name': 'David Miller',
+            'last_order': "['Quarter Pounder', 'French Fries', 'Apple Pie']",
+            'last_visit': time.strftime("%Y-%m-%d %H:%M:%S"),
+            'total_visits': 8,
+            'preferred_time': '12:00'
+        }
+        customer_db = pd.concat([customer_db, pd.DataFrame([sdn_customer])], ignore_index=True)
+        
+        # Save to CSV
+        db_path = os.environ.get('CUSTOMER_DB_PATH', './data/customer_database.csv')
+        customer_db.to_csv(db_path, index=False)
+        print(f"Added demo plate SDN7484U to database")
 
 @app.get("/customer/{plate_number}")
 def get_customer(plate_number: str, request: Request = None):
