@@ -264,7 +264,9 @@ async def detect_plate(file: UploadFile = File(...)):
         # Sort by confidence
         #detected_plates = sorted(detected_plates, key=lambda x: x["confidence"], reverse=True)
         if detected_plates:
-            detected_plates = [detected_plates[0]]
+            plate = detected_plates[0]  
+            cleaned_text = re.sub(r'[^A-Z0-9]', '', plate["text"].upper())
+            detected_plates = [{"text": cleaned_text, "confidence": plate["confidence"]}]
         else:
             detected_plates = []
 
