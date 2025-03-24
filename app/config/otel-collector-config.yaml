@@ -2,7 +2,9 @@ receivers:
   otlp:
     protocols:
       grpc:
+        endpoint: 0.0.0.0:4317
       http:
+        endpoint: 0.0.0.0:4318
 
 processors:
   batch:
@@ -18,11 +20,11 @@ exporters:
     resource_to_telemetry_conversion:
       enabled: true
     
-  logging:
+  debug:
     verbosity: detailed
     
-  jaeger:
-    endpoint: jaeger:14250
+  otlphttp:
+    endpoint: "http://jaeger:4318"
     tls:
       insecure: true
 
@@ -31,8 +33,8 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [logging, jaeger]
+      exporters: [debug, otlphttp]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [logging, prometheus]
+      exporters: [debug, prometheus]

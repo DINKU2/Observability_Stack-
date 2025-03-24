@@ -22,7 +22,7 @@ from prometheus_fastapi_instrumentator import Instrumentator, metrics
 # Setup tracing
 resource = Resource(attributes={SERVICE_NAME: "customer-api"})
 tracer_provider = TracerProvider(resource=resource)
-otlp_exporter = OTLPSpanExporter(endpoint="otel-collector:4317", insecure=True)
+otlp_exporter = OTLPSpanExporter(endpoint="eog-otel-collector-1:4317", insecure=True)
 span_processor = BatchSpanProcessor(otlp_exporter)
 tracer_provider.add_span_processor(span_processor)
 trace.set_tracer_provider(tracer_provider)

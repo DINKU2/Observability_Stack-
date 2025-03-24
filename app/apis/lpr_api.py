@@ -33,7 +33,7 @@ from prometheus_fastapi_instrumentator import Instrumentator, metrics
 # Setup tracing
 resource = Resource(attributes={SERVICE_NAME: "lpr-api"})
 tracer_provider = TracerProvider(resource=resource)
-otlp_exporter = OTLPSpanExporter(endpoint="otel-collector:4317", insecure=True)
+otlp_exporter = OTLPSpanExporter(endpoint="eog-otel-collector-1:4317", insecure=True)
 span_processor = BatchSpanProcessor(otlp_exporter)
 tracer_provider.add_span_processor(span_processor)
 trace.set_tracer_provider(tracer_provider)
@@ -291,26 +291,6 @@ async def detect_plate(file: UploadFile = File(...)):
                             cv2.putText(marked_img, cleaned_text, (x1, y1-10), 
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
                             
-                # Last resort for specific test cases: hardcoded known plates
-                if "sdn7484u" in img_filename.lower() or "sdn" in img_filename.lower():
-                    detected_plates.append({
-                        "text": "SDN7484U",
-                        "confidence": 0.95
-                    })
-                    # Find the approximate position of the plate and mark it
-                    h, w, _ = original_img.shape
-                    x1, y1 = int(w * 0.3), int(h * 0.7)
-                    x2, y2 = int(w * 0.7), int(h * 0.9)
-                    cv2.rectangle(marked_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    cv2.putText(marked_img, "SDN7484U", (x1, y1-10), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-                
-                elif "brit" in img_filename.lower():
-                    detected_plates.append({
-                        "text": "BRIT0001",
-                        "confidence": 0.95
-                    })
-                
             except Exception as direct_error:
                 logger.error(f"Error in direct plate detection: {str(direct_error)}")
         
