@@ -52,11 +52,14 @@
                 <button id="loadImages" class="btn btn-primary">Load Random Images</button>
                 <button id="processSelected" class="btn btn-success" disabled>Process Selected Image</button>
                 
-                <!-- Add direct file upload option -->
+                <!-- Add license plate search feature -->
                 <div class="mt-3 p-3 border rounded">
-                    <h5>Or Upload Your Own Image</h5>
-                    <input type="file" id="imageUpload" class="form-control mb-2" accept="image/*">
-                    <button id="processUpload" class="btn btn-success">Process Uploaded Image</button>
+                    <h5>Search by License Plate</h5>
+                    <div class="input-group mb-2">
+                        <input type="text" id="licensePlateInput" class="form-control" placeholder="Enter license plate (exact format)">
+                        <button id="searchPlate" class="btn btn-primary">Search</button>
+                    </div>
+                    <small class="text-muted">Note: Enter the exact format (spaces, capitalization will be preserved)</small>
                 </div>
             </div>
         </div>
@@ -86,8 +89,8 @@
         
         document.getElementById('loadImages').addEventListener('click', loadRandomImages);
         document.getElementById('processSelected').addEventListener('click', processSelectedImage);
-        document.getElementById('processUpload').addEventListener('click', processUploadedImage);
         document.getElementById('checkConnection').addEventListener('click', checkApiConnections);
+        document.getElementById('searchPlate').addEventListener('click', searchByLicensePlate);
         
         // Check API connections and update status indicators
         async function checkApiConnections() {
@@ -151,120 +154,6 @@
                 customerStatus.className = 'badge bg-danger';
                 customerStatus.textContent = 'Customer API: Unreachable';
                 console.error('Customer API connection error:', error);
-            }
-        }
-        
-        // Process uploaded image
-        async function processUploadedImage() {
-            const fileInput = document.getElementById('imageUpload');
-            if (!fileInput.files || fileInput.files.length === 0) {
-                alert('Please select an image to upload');
-                return;
-            }
-            
-            try {
-                // Show loading state
-                document.getElementById('customerInfo').innerHTML = '<div class="alert alert-info">Processing uploaded image...</div>';
-                document.getElementById('recommendations').innerHTML = '';
-                document.getElementById('results').style.display = 'block';
-                document.getElementById('processedImage').src = '';
-                
-                // Create form data with uploaded file
-                const formData = new FormData();
-                const file = fileInput.files[0];
-                
-                // Display the image immediately as preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('processedImage').src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-                
-                // Add file name hints for license plate detection
-                let fileName = file.name.toLowerCase();
-                // Check if filename contains common license plate formats
-                if (fileName.includes("wor") || fileName.includes("516") || fileName.includes("516k")) {
-                    // Add a hint in the filename
-                    formData.append('file', file, 'WOR516K.jpg');
-                } else if (fileName.includes("sdn") || fileName.includes("brit")) {
-                    // Keep original name to help detection for other known plates
-                    formData.append('file', file, file.name);
-                } else {
-                    formData.append('file', file, file.name);
-                }
-                
-                // Call LPR API
-                const lprResponse = await fetch(`${LPR_API}/detect_plate/`, {
-                    method: 'POST',
-                    body: formData,
-                });
-                
-                if (!lprResponse.ok) {
-                    throw new Error(`LPR API error: ${lprResponse.status}`);
-                }
-                
-                const lprData = await lprResponse.json();
-                
-                // Update with processed image if available
-                if (lprData.processed_image) {
-                    document.getElementById('processedImage').src = `data:image/jpeg;base64,${lprData.processed_image}`;
-                }
-                
-                // Check for errors
-                if (lprData.error) {
-                    document.getElementById('customerInfo').innerHTML = `
-                        <div class="alert alert-danger">
-                            <p>Error during image processing: ${lprData.error}</p>
-                        </div>
-                    `;
-                    document.getElementById('recommendations').innerHTML = '';
-                    return;
-                }
-                
-                // Process license plate detection results
-                if (lprData.plates && lprData.plates.length > 0) {
-                    const plateNumber = lprData.plates[0].text;
-                    const confidence = lprData.plates[0].confidence;
-                    
-                    console.log(`Detected license plate: ${plateNumber} with confidence ${confidence}`);
-                    
-                    try {
-                        // Get customer info
-                        const customerResponse = await fetch(`${CUSTOMER_API}/customer/${plateNumber}`);
-                        
-                        if (!customerResponse.ok) {
-                            throw new Error(`Customer API error: ${customerResponse.status}`);
-                        }
-                        
-                        const customerData = await customerResponse.json();
-                        displayResults(lprData.plates[0], customerData);
-                        
-                    } catch (customerError) {
-                        console.error('Customer API error:', customerError);
-                        document.getElementById('customerInfo').innerHTML = `
-                            <div class="alert alert-danger">
-                                <p>Error fetching customer data: ${customerError.message}</p>
-                                <p>Detected plate: ${plateNumber} (Confidence: ${(confidence * 100).toFixed(2)}%)</p>
-                            </div>
-                        `;
-                    }
-                } else {
-                    document.getElementById('customerInfo').innerHTML = `
-                        <div class="alert alert-warning">
-                            <p>No license plate detected in the image.</p>
-                            <p>Try uploading a different image with a clearer view of the license plate.</p>
-                        </div>
-                    `;
-                    document.getElementById('recommendations').innerHTML = '';
-                }
-            } catch (error) {
-                console.error('Error processing uploaded image:', error);
-                document.getElementById('customerInfo').innerHTML = `
-                    <div class="alert alert-danger">
-                        <p>Error processing image: ${error.message}</p>
-                        <p>The API server might not be running. Please check your connection.</p>
-                    </div>
-                `;
             }
         }
         
@@ -410,6 +299,7 @@
                 document.getElementById('customerInfo').innerHTML = '<div class="alert alert-info">Processing image...</div>';
                 document.getElementById('recommendations').innerHTML = '';
                 document.getElementById('results').style.display = 'block';
+                document.getElementById('processedImageContainer').style.display = 'block';
                 document.getElementById('processedImage').src = '';
                 
                 // Create form data
@@ -455,7 +345,19 @@
                     const plateNumber = lprData.plates[0].text;
                     const confidence = lprData.plates[0].confidence;
                     
-                    console.log(`Detected license plate: ${plateNumber} with confidence ${confidence}`);
+                    console.log(`Detected license plate: ${plateNumber || "[No text detected]"} with confidence ${confidence}`);
+                    
+                    // Check if we actually have plate text before attempting to fetch customer data
+                    if (!plateNumber) {
+                        document.getElementById('customerInfo').innerHTML = `
+                            <div class="alert alert-warning">
+                                <p>License plate region detected (Confidence: ${(confidence * 100).toFixed(2)}%) but no readable text was found.</p>
+                                <p>Try selecting a different image with a clearer view of the license plate.</p>
+                            </div>
+                        `;
+                        document.getElementById('recommendations').innerHTML = '';
+                        return;
+                    }
                     
                     try {
                         // Get customer info
@@ -530,6 +432,88 @@
                     <div class="alert alert-warning">
                         <p>License plate detected: ${plateData.text} (Confidence: ${(plateData.confidence * 100).toFixed(2)}%)</p>
                         <p>No customer record found for this plate.</p>
+                    </div>
+                `;
+                recommendationsDiv.innerHTML = `
+                    <div class="alert alert-info">
+                        <p>This appears to be a new customer!</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Add search by license plate function
+        async function searchByLicensePlate() {
+            const licensePlateInput = document.getElementById('licensePlateInput');
+            const plateNumber = licensePlateInput.value.trim();
+            
+            if (!plateNumber) {
+                alert('Please enter a license plate number');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                document.getElementById('customerInfo').innerHTML = '<div class="alert alert-info">Searching for license plate...</div>';
+                document.getElementById('recommendations').innerHTML = '';
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('processedImageContainer').style.display = 'none'; // Hide image section
+                
+                // Get customer info directly using the entered plate number
+                const customerResponse = await fetch(`${CUSTOMER_API}/customer/${plateNumber}`);
+                
+                if (!customerResponse.ok) {
+                    throw new Error(`Customer API error: ${customerResponse.status}`);
+                }
+                
+                const customerData = await customerResponse.json();
+                
+                // Display customer info without image
+                displaySearchResults(plateNumber, customerData);
+                
+            } catch (error) {
+                console.error('Error searching license plate:', error);
+                document.getElementById('customerInfo').innerHTML = `
+                    <div class="alert alert-danger">
+                        <p>Error searching for license plate: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Function to display search results (without image)
+        function displaySearchResults(plateNumber, customerData) {
+            const customerInfoDiv = document.getElementById('customerInfo');
+            const recommendationsDiv = document.getElementById('recommendations');
+            
+            if (customerData.found) {
+                const customer = customerData.customer;
+                
+                customerInfoDiv.innerHTML = `
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">${customer.name}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Plate: ${customer.license_plate}</h6>
+                            <p><strong>Last Visit:</strong> ${customer.last_visit}</p>
+                            <p><strong>Total Visits:</strong> ${customer.total_visits}</p>
+                            <p><strong>Last Order:</strong> ${Array.isArray(customer.last_order) ? customer.last_order.join(', ') : customer.last_order}</p>
+                            <p><strong>Preferred Time:</strong> ${customer.preferred_time}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Display recommendations
+                let recHTML = '<div class="list-group">';
+                customerData.recommendations.forEach(item => {
+                    recHTML += `<div class="list-group-item">${item}</div>`;
+                });
+                recHTML += '</div>';
+                recommendationsDiv.innerHTML = recHTML;
+                
+            } else {
+                customerInfoDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <p>No customer record found for license plate: ${plateNumber}</p>
                     </div>
                 `;
                 recommendationsDiv.innerHTML = `
