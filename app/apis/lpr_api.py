@@ -105,166 +105,63 @@ async def detect_plate(file: UploadFile = File(...)):
             img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
             logger.info(f"After conversion image shape: {img.shape}")
         
-        # Convert BGR to RGB (OpenCV loads as BGR)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        logger.info(f"After BGR to RGB conversion image shape: {img.shape}")
-        
         # Keep a copy of the original image for drawing
-        original_img = img.copy()
         marked_img = img.copy()
-            
-        # Run YOLO on the image to detect cars
-        model = YOLO('yolov8n.pt')
-        logger.info(f"Model loaded successfully: {type(model)}")
         
+        # Run YOLO detection
         results = model(img, verbose=False)
         logger.info(f"YOLO results obtained: {len(results)} with {len(results[0].boxes)} detected objects")
         
-        detected_cars = []
-        car_coords = []
-        
-        for result in results:
-            boxes = result.boxes
-            for box in boxes:
-                class_id = int(box.cls.item())
-                conf = float(box.conf.item())
-                if (model.names[class_id] == 'car' or model.names[class_id] == 'truck') and conf > 0.3:
-                    logger.info(f"Detected a {model.names[class_id]} with confidence {conf}")
-                    x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
-                    car_coords.append((x1, y1, x2, y2))
-                    detected_cars.append(img[y1:y2, x1:x2])
-                    cv2.rectangle(marked_img, (x1, y1), (x2, y2), (255, 0, 0), 2)
-        
-        logger.info(f"Number of cars detected: {len(detected_cars)}")
-        
         detected_plates = []
         
-        # Process each detected car region
-        for i, (car_img, (x1, y1, x2, y2)) in enumerate(zip(detected_cars, car_coords)):
-            try:
-                # Convert to grayscale
-                gray = cv2.cvtColor(car_img, cv2.COLOR_RGB2GRAY)
+        # Process each detected car
+        for box in results[0].boxes:
+            class_id = int(box.cls)
+            conf = float(box.conf)
+            if (results[0].names[class_id] in ['car', 'truck']) and conf > 0.3:
+                # Get car coordinates
+                x1, y1, x2, y2 = box.xyxy[0].numpy().astype(int)
                 
-                # Apply multiple preprocessing techniques
-                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-                enhanced1 = clahe.apply(gray)
-                enhanced2 = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-                enhanced3 = cv2.GaussianBlur(gray, (3, 3), 0)
-                enhanced3 = cv2.addWeighted(gray, 1.5, enhanced3, -0.5, 0)
+                # Extract car region
+                car_region = img[y1:y2, x1:x2]
+                if car_region.size == 0:
+                    continue
                 
-                best_detections = {}  # Dictionary to store best confidence detection for each region
+                # Draw car region
+                cv2.rectangle(marked_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 
-                # Try OCR on all enhanced versions
-                for enhanced in [gray, enhanced1, enhanced2, enhanced3]:
-                    plate_texts = reader.readtext(enhanced, min_size=10, text_threshold=0.3, paragraph=False)
-                    
-                    for (bbox, text, prob) in plate_texts:
-                        # Skip very low confidence detections
-                        if prob < 0.1:  # 10% minimum confidence threshold
-                            continue
-                            
-                        # Calculate absolute position of the text in original image
-                        (top_left, top_right, bottom_right, bottom_left) = bbox
+                # Enhance image for better plate detection
+                gray = cv2.cvtColor(car_region, cv2.COLOR_BGR2GRAY)
+                gray = cv2.equalizeHist(gray)
+                
+                # Use EasyOCR to find text in car region
+                texts = reader.readtext(gray)
+                
+                # Filter for likely license plate text
+                for (bbox, text, prob) in texts:
+                    if len(text) >= 5 and prob > 0.3:
+                        # Calculate absolute positions for drawing
+                        (top_left, _, bottom_right, _) = bbox
                         tx1, ty1 = map(int, top_left)
                         tx3, ty3 = map(int, bottom_right)
                         
-                        # Create a region key based on approximate box location
-                        region_key = (tx1//10, ty1//10, tx3//10, ty3//10)
+                        # Calculate absolute positions in original image
+                        abs_tx1, abs_ty1 = x1 + tx1, y1 + ty1
+                        abs_tx3, abs_ty3 = x1 + tx3, y1 + ty3
                         
-                        # Only keep the highest confidence detection for each region
-                        if region_key not in best_detections or prob > best_detections[region_key]["confidence"]:
-                            best_detections[region_key] = {
-                                "text": text,
-                                "confidence": float(prob),
-                                "bbox": (tx1, ty1, tx3, ty3)
-                            }
-                
-                # Add best detections to results and draw them
-                for detection in best_detections.values():
-                    detected_plates.append({
-                        "text": detection["text"],
-                        "confidence": detection["confidence"]
-                    })
-                    
-                    # Draw on image
-                    tx1, ty1, tx3, ty3 = detection["bbox"]
-                    # Calculate absolute positions in original image
-                    abs_tx1, abs_ty1 = x1 + tx1, y1 + ty1
-                    abs_tx3, abs_ty3 = x1 + tx3, y1 + ty3
-                    
-                    # Draw car region
-                    cv2.rectangle(marked_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    # Draw text region
-                    cv2.rectangle(marked_img, (abs_tx1, abs_ty1), (abs_tx3, abs_ty3), (255, 255, 0), 2)
-                    # Add text label
-                    cv2.putText(marked_img, detection["text"], (x1, y1-10), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-                    
-            except Exception as car_error:
-                logger.error(f"Error processing car {i+1}: {str(car_error)}")
-                continue
+                        # Draw text region
+                        cv2.rectangle(marked_img, (abs_tx1, abs_ty1), (abs_tx3, abs_ty3), (0, 255, 0), 2)
+                        cv2.putText(marked_img, text, (x1, y1-10), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                        
+                        detected_plates.append({
+                            "text": text,
+                            "confidence": float(prob)
+                        })
         
-        # If no text found in car regions, try direct detection on the full image
-        if not detected_plates:
-            logger.info("No text found in car regions, trying direct detection...")
-            try:
-                # Convert to grayscale
-                gray = cv2.cvtColor(original_img, cv2.COLOR_RGB2GRAY)
-                
-                # Apply multiple preprocessing techniques
-                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-                enhanced1 = clahe.apply(gray)
-                enhanced2 = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-                enhanced3 = cv2.GaussianBlur(gray, (3, 3), 0)
-                enhanced3 = cv2.addWeighted(gray, 1.5, enhanced3, -0.5, 0)
-                
-                best_detections = {}  # Dictionary to store best confidence detection for each region
-                
-                # Try OCR on all enhanced versions
-                for enhanced in [gray, enhanced1, enhanced2, enhanced3]:
-                    plate_texts = reader.readtext(enhanced, min_size=10, text_threshold=0.3, paragraph=False)
-                    
-                    for (bbox, text, prob) in plate_texts:
-                        # Skip very low confidence detections
-                        if prob < 0.1:  # 10% minimum confidence threshold
-                            continue
-                            
-                        # Extract bounding box coordinates
-                        (top_left, top_right, bottom_right, bottom_left) = bbox
-                        x1, y1 = map(int, top_left)
-                        x3, y3 = map(int, bottom_right)
-                        
-                        # Create a region key based on approximate box location
-                        region_key = (x1//10, y1//10, x3//10, y3//10)
-                        
-                        # Only keep the highest confidence detection for each region
-                        if region_key not in best_detections or prob > best_detections[region_key]["confidence"]:
-                            best_detections[region_key] = {
-                                "text": text,
-                                "confidence": float(prob),
-                                "bbox": (x1, y1, x3, y3)
-                            }
-                
-                # Add best detections to results and draw them
-                for detection in best_detections.values():
-                    detected_plates.append({
-                        "text": detection["text"],
-                        "confidence": detection["confidence"]
-                    })
-                    
-                    # Draw on image
-                    x1, y1, x3, y3 = detection["bbox"]
-                    cv2.rectangle(marked_img, (x1, y1), (x3, y3), (0, 255, 0), 2)
-                    cv2.putText(marked_img, detection["text"], (x1, y1-10), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-                            
-            except Exception as direct_error:
-                logger.error(f"Error in direct text detection: {str(direct_error)}")
-        
-        # Sort by confidence
-        #detected_plates = sorted(detected_plates, key=lambda x: x["confidence"], reverse=True)
+        # Clean and format the detected plate text
         if detected_plates:
-            plate = detected_plates[0]  
+            plate = detected_plates[0]
             cleaned_text = re.sub(r'[^A-Z0-9]', '', plate["text"].upper())
             detected_plates = [{"text": cleaned_text, "confidence": plate["confidence"]}]
         else:
@@ -280,6 +177,14 @@ async def detect_plate(file: UploadFile = File(...)):
         logger.info(f"Text detection completed in {processing_time:.2f} seconds")
         logger.info(f"Number of text regions detected: {len(detected_plates)}")
         
+        # Add metrics before return
+        if detected_plates:
+            PLATE_DETECTION_COUNT.labels(success="true").inc()
+        else:
+            PLATE_DETECTION_COUNT.labels(success="false").inc()
+
+        DETECTION_TIME.observe(processing_time)
+
         return {
             "plates": detected_plates,
             "processing_time": processing_time,
