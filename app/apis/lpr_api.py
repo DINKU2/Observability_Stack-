@@ -408,27 +408,28 @@ async def get_dataset_image(image_name: str):
         return FileResponse(image_path)
     return {"error": "Image not found"}
 
-# Instrument FastAPI with OpenTelemetry
+# First, instrument the app
 FastAPIInstrumentor.instrument_app(app)
 RequestsInstrumentor().instrument()
 
-# Add Prometheus metrics
+# Create the Instrumentator but DON'T call expose yet
 instrumentator = Instrumentator(
     should_group_status_codes=False,
     should_ignore_untemplated=True,
     should_respect_env_var=True,
     should_instrument_requests_inprogress=True,
-    excluded_handlers=[".*admin.*", "/metrics"],
-    env_var_name="ENABLE_METRICS",
+    excluded_handlers=["/metrics"],  # Important to exclude metrics endpoint
     inprogress_name="fastapi_inprogress",
     inprogress_labels=True,
 )
 
-instrumentator.instrument(app).expose(app)
+# Instrument the app
+instrumentator.instrument(app)
 
+# NOW define the metrics endpoint
 @app.get("/metrics")
 async def metrics():
     return Response(
-        generate_latest(),
+        content=generate_latest(),
         media_type="text/plain"
     )
