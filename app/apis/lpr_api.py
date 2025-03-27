@@ -21,14 +21,40 @@ from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 import re
+from prometheus_client import generate_latest
+from fastapi.responses import Response
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Prometheus metrics
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, Summary
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
+
+# Image processing metrics
+IMAGE_PROCESSING_TIME = Summary(
+    'lpr_image_processing_seconds',
+    'Time spent processing each image'
+)
+
+LICENSE_PLATE_SEARCH = Counter(
+    'lpr_license_plate_search_total',
+    'Number of license plate searches',
+    ['status']  # 'success', 'failure'
+)
+
+PLATE_DETECTION = Counter(
+    'lpr_plate_detection_total',
+    'Number of license plates detected',
+    ['result']  # 'detected', 'not_detected'
+)
+
+PROCESSING_DURATION = Histogram(
+    'lpr_processing_duration_seconds',
+    'Time spent processing images',
+    buckets=[.1, .5, 1.0, 2.0, 5.0, 10.0]
+)
 
 # Setup tracing
 resource = Resource(attributes={SERVICE_NAME: "lpr-api"})
@@ -38,19 +64,6 @@ span_processor = BatchSpanProcessor(otlp_exporter)
 tracer_provider.add_span_processor(span_processor)
 trace.set_tracer_provider(tracer_provider)
 tracer = trace.get_tracer(__name__)
-
-# Custom metrics
-PLATE_DETECTION_COUNT = Counter(
-    "lpr_plate_detection_count", 
-    "Count of license plates detected",
-    ["success"]  # Label to track successful vs unsuccessful detections
-)
-
-DETECTION_TIME = Histogram(
-    "lpr_detection_time_seconds",
-    "Time spent processing images",
-    buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
-)
 
 app = FastAPI(title="License Plate Recognition API")
 
@@ -159,6 +172,32 @@ async def detect_plate(file: UploadFile = File(...)):
                             "confidence": float(prob)
                         })
         
+        # If no plates found, try processing the entire image
+        if not detected_plates:
+            logger.info("No plates found in car regions, trying full image")
+            # Process the full image
+            full_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            full_gray = cv2.equalizeHist(full_gray)
+            texts = reader.readtext(full_gray)
+            
+            # Filter for likely license plate text
+            for (bbox, text, prob) in texts:
+                if len(text) >= 5 and prob > 0.3:
+                    # Calculate positions for drawing
+                    (top_left, _, bottom_right, _) = bbox
+                    tx1, ty1 = map(int, top_left)
+                    tx3, ty3 = map(int, bottom_right)
+                    
+                    # Draw text region
+                    cv2.rectangle(marked_img, (tx1, ty1), (tx3, ty3), (0, 0, 255), 2)  # Red box for full-image detection
+                    cv2.putText(marked_img, text, (tx1, ty1-10), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                    
+                    detected_plates.append({
+                        "text": text,
+                        "confidence": float(prob)
+                    })
+        
         # Clean and format the detected plate text
         if detected_plates:
             plate = detected_plates[0]
@@ -171,19 +210,26 @@ async def detect_plate(file: UploadFile = File(...)):
         _, buffer = cv2.imencode('.jpg', cv2.cvtColor(marked_img, cv2.COLOR_RGB2BGR))
         img_str = base64.b64encode(buffer).decode('utf-8')
         
-        end_time = time.time()
-        processing_time = end_time - start_time
+        processing_time = time.time() - start_time
         
         logger.info(f"Text detection completed in {processing_time:.2f} seconds")
         logger.info(f"Number of text regions detected: {len(detected_plates)}")
         
-        # Add metrics before return
-        if detected_plates:
-            PLATE_DETECTION_COUNT.labels(success="true").inc()
+        # Update metrics
+        IMAGE_PROCESSING_TIME.observe(processing_time)  # Manual timing observation
+        
+        # These stay the same
+        if len(results[0].boxes) > 0:
+            LICENSE_PLATE_SEARCH.labels(status='success').inc()
         else:
-            PLATE_DETECTION_COUNT.labels(success="false").inc()
+            LICENSE_PLATE_SEARCH.labels(status='failure').inc()
 
-        DETECTION_TIME.observe(processing_time)
+        if detected_plates:
+            PLATE_DETECTION.labels(result='detected').inc()
+        else:
+            PLATE_DETECTION.labels(result='not_detected').inc()
+
+        PROCESSING_DURATION.observe(processing_time)
 
         return {
             "plates": detected_plates,
@@ -192,6 +238,7 @@ async def detect_plate(file: UploadFile = File(...)):
         }
         
     except Exception as e:
+        LICENSE_PLATE_SEARCH.labels(status='failure').inc()
         logger.error(f"Error in detect_plate: {str(e)}")
         try:
             if 'marked_img' in locals():
@@ -366,4 +413,22 @@ FastAPIInstrumentor.instrument_app(app)
 RequestsInstrumentor().instrument()
 
 # Add Prometheus metrics
-Instrumentator().instrument(app).expose(app)
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    should_ignore_untemplated=True,
+    should_respect_env_var=True,
+    should_instrument_requests_inprogress=True,
+    excluded_handlers=[".*admin.*", "/metrics"],
+    env_var_name="ENABLE_METRICS",
+    inprogress_name="fastapi_inprogress",
+    inprogress_labels=True,
+)
+
+instrumentator.instrument(app).expose(app)
+
+@app.get("/metrics")
+async def metrics():
+    return Response(
+        generate_latest(),
+        media_type="text/plain"
+    )
