@@ -33,7 +33,10 @@ from prometheus_fastapi_instrumentator import Instrumentator, metrics
 # Setup tracing
 resource = Resource(attributes={SERVICE_NAME: "lpr-api"})
 tracer_provider = TracerProvider(resource=resource)
-otlp_exporter = OTLPSpanExporter(endpoint="eog-otel-collector-1:4317", insecure=True)
+otel_endpoint = os.environ.get("OTEL_COLLECTOR_ENDPOINT", "otel-collector:4317")
+if not (otel_endpoint.startswith("http://") or otel_endpoint.startswith("https://")):
+    otel_endpoint = f"http://{otel_endpoint}"
+otlp_exporter = OTLPSpanExporter(endpoint=otel_endpoint, insecure=True)
 span_processor = BatchSpanProcessor(otlp_exporter)
 tracer_provider.add_span_processor(span_processor)
 trace.set_tracer_provider(tracer_provider)
@@ -114,9 +117,6 @@ async def detect_plate(file: UploadFile = File(...)):
         marked_img = img.copy()
             
         # Run YOLO on the image to detect cars
-        model = YOLO('yolov8n.pt')
-        logger.info(f"Model loaded successfully: {type(model)}")
-        
         results = model(img, verbose=False)
         logger.info(f"YOLO results obtained: {len(results)} with {len(results[0].boxes)} detected objects")
         
@@ -449,8 +449,7 @@ async def get_test_images(count: int = 30):
 @app.get("/dataset-images/{image_name}")
 async def get_dataset_image(image_name: str):
     # Define the path to your dataset images
-    dataset_path = os.environ.get("DATASET_PATH", "/app/data/images")
-    image_path = os.path.join(dataset_path, image_name)
+    image_path = os.path.join(DATASET_PATH, image_name)
     
     if os.path.exists(image_path):
         return FileResponse(image_path)

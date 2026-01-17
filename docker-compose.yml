@@ -11,10 +11,12 @@ services:
       - ./app/data:/app/data
       - ./dataset:/app/dataset
       - ./app/static:/app/static
+      - ./YOLO/yolov8n.pt:/app/models/yolov8n.pt:ro
     environment:
       - MODEL_PATH=/app/models/yolov8n.pt
       - CUSTOMER_API_URL=http://customer-api:8001
       - DATASET_PATH=/app/dataset/images
+      - OTEL_COLLECTOR_ENDPOINT=otel-collector:4317
     depends_on:
       - otel-collector
     networks:
@@ -30,6 +32,7 @@ services:
       - ./app/data:/app/data
     environment:
       - CUSTOMER_DB_PATH=/app/data/customer_database.csv
+      - OTEL_COLLECTOR_ENDPOINT=otel-collector:4317
     depends_on:
       - otel-collector
     networks:
